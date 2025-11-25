@@ -1,182 +1,4 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <title>Ad Clip Generator – Multi-Size Video Exporter</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <!-- FFmpeg.wasm (browser bundle) -->
-  <!-- For production, self-host @ffmpeg/ffmpeg and its core files. -->
-  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.10.0/dist/ffmpeg.min.js"></script>
-  <style>
-    :root {
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      color: #111827;
-      background: #f3f4f6;
-    }
-    body {
-      margin: 0;
-      padding: 24px;
-      display: flex;
-      justify-content: center;
-    }
-    .app {
-      max-width: 960px;
-      width: 100%;
-      background: #ffffff;
-      border-radius: 16px;
-      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
-      padding: 24px 24px 32px;
-      box-sizing: border-box;
-    }
-    h1 {
-      margin: 0 0 4px;
-      font-size: 24px;
-      letter-spacing: -0.02em;
-    }
-    .subtitle {
-      margin-bottom: 20px;
-      color: #6b7280;
-      font-size: 14px;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
-      gap: 20px;
-    }
-    @media (max-width: 800px) {
-      .grid {
-        grid-template-columns: minmax(0, 1fr);
-      }
-    }
-    .card {
-      border-radius: 12px;
-      border: 1px solid #e5e7eb;
-      padding: 16px 18px 18px;
-      background: #f9fafb;
-    }
-    .card h2 {
-      margin: 0 0 8px;
-      font-size: 16px;
-    }
-    .field {
-      margin-bottom: 12px;
-      font-size: 14px;
-    }
-    .field label {
-      display: block;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-    .field small {
-      display: block;
-      color: #6b7280;
-      font-size: 12px;
-    }
-    input[type="number"],
-    input[type="file"],
-    select {
-      width: 100%;
-      box-sizing: border-box;
-      font-size: 14px;
-      padding: 8px 9px;
-      border-radius: 8px;
-      border: 1px solid #d1d5db;
-      background: #ffffff;
-      outline: none;
-    }
-    input[type="number"]:focus,
-    input[type="file"]:focus,
-    select:focus {
-      border-color: #2563eb;
-      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
-    }
-    .checkbox-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px 16px;
-      margin-top: 6px;
-    }
-    .checkbox-row label {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    button {
-      border: none;
-      border-radius: 999px;
-      padding: 10px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      background: linear-gradient(135deg, #2563eb, #4f46e5);
-      color: white;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
-    }
-    button:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    .status {
-      margin-top: 10px;
-      font-size: 13px;
-      color: #4b5563;
-    }
-    .status strong {
-      color: #111827;
-    }
-    .badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 11px;
-      background: #eff6ff;
-      border-radius: 999px;
-      padding: 4px 10px;
-      color: #1d4ed8;
-      margin-top: 4px;
-    }
-    .badge span {
-      height: 6px;
-      width: 6px;
-      border-radius: 999px;
-      background: #22c55e;
-    }
-    .output-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 6px;
-    }
-    .chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      font-size: 11px;
-    }
-    .chip {
-      border-radius: 999px;
-      padding: 3px 9px;
-      background: #e5e7eb;
-      color: #374151;
-    }
-    .output-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 14px;
-      margin-top: 10px;
-    }
-    .output-item {
-      border-radius: 10px;
-      background: #ffffff;
-      border: 1px solid #e5e7eb;
-      padding: 8px 8px 10px;
-      display: flex;
+  display: flex;
       flex-direction: column;
       gap: 6px;
       font-size: 12px;
@@ -199,6 +21,26 @@
     .hint {
       font-size: 11px;
       color: #6b7280;
+      margin-top: 6px;
+    }
+    .cta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 8px;
+      margin-top: 6px;
+    }
+    .cta-grid input {
+      width: 100%;
+    }
+    .inline-note {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #4b5563;
+      background: #eef2ff;
+      padding: 6px 10px;
+      border-radius: 8px;
       margin-top: 6px;
     }
     .error {
@@ -232,6 +74,16 @@
         </div>
 
         <div class="field">
+          <label for="presetProfile">Preset profiles</label>
+          <select id="presetProfile">
+            <option value="custom">Custom</option>
+            <option value="meta">Meta Ads pack (15s · 9:16 + 1:1)</option>
+            <option value="youtube">YouTube pack (30s · 16:9)</option>
+          </select>
+          <small>Presets auto-select clip length and aspect ratios for common platforms.</small>
+        </div>
+
+        <div class="field">
           <label>Clip length (seconds)</label>
           <div style="display:flex; gap:8px;">
             <input
@@ -256,10 +108,7 @@
             min="1"
             max="3"
             value="3"
-          />
-          <small>
-            Up to 3 base clips will be cut from different sections of the video.
-          </small>
+@@ -263,128 +293,254 @@
         </div>
 
         <div class="field">
@@ -281,6 +130,25 @@
           <small>
             You’ll get separate files per base clip + selected ratio.
           </small>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>Brand overlays</h2>
+        <div class="field">
+          <label for="logoFile">Brand logo (PNG/JPG)</label>
+          <input type="file" id="logoFile" accept="image/*" />
+          <small>Optional. The logo is scaled and placed in the top-left corner of every clip.</small>
+        </div>
+
+        <div class="field">
+          <label>CTA text per base clip</label>
+          <div class="cta-grid">
+            <input class="cta-input" data-index="1" placeholder="Clip 1 CTA (e.g. Shop now)" />
+            <input class="cta-input" data-index="2" placeholder="Clip 2 CTA (e.g. Learn more)" />
+            <input class="cta-input" data-index="3" placeholder="Clip 3 CTA (e.g. Subscribe)" />
+          </div>
+          <small>CTA badges render in the lower-right of each exported file. Leave blank to skip.</small>
         </div>
 
         <div class="divider"></div>
@@ -327,6 +195,9 @@
       const clipLengthInput = document.getElementById("clipLength");
       const clipCountInput = document.getElementById("clipCount");
       const ratioCheckboxes = document.querySelectorAll(".ratio-option");
+      const presetSelect = document.getElementById("presetProfile");
+      const logoInput = document.getElementById("logoFile");
+      const ctaInputs = document.querySelectorAll(".cta-input");
       const generateBtn = document.getElementById("generateBtn");
       const btnLabel = document.getElementById("btnLabel");
       const statusEl = document.getElementById("status");
@@ -339,6 +210,7 @@
       let sourceFile = null;
       let sourceUrl = null;
       let videoDuration = null;
+      let logoFile = null;
 
       function setStatus(text, mode = "info") {
         const colors = {
@@ -361,6 +233,109 @@
 
       function clamp(num, min, max) {
         return Math.min(Math.max(num, min), max);
+      }
+
+      function enforceNumberInput(input, min, max, fallback) {
+        let val = parseFloat(input.value);
+        if (Number.isNaN(val)) val = fallback;
+        const clamped = clamp(val, min, max);
+        if (clamped !== val) {
+          input.value = clamped;
+          setStatus(
+            `Adjusted ${input.id} to ${clamped} (allowed: ${min}–${max}).`,
+            "warn"
+          );
+        }
+        return clamped;
+      }
+
+      function readFileAsDataURL(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(new Error("Failed to read file"));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function loadImageFromDataURL(dataUrl) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error("Could not load image"));
+          img.src = dataUrl;
+        });
+      }
+
+      function dataURLToUint8Array(dataUrl) {
+        const base64 = dataUrl.split(",")[1];
+        const binary = atob(base64);
+        const len = binary.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binary.charCodeAt(i);
+        }
+        return bytes;
+      }
+
+      async function imageFileToPNGBytes(file, targetWidth = 260) {
+        const dataUrl = await readFileAsDataURL(file);
+        const img = await loadImageFromDataURL(dataUrl);
+        const scale = Math.min(1, targetWidth / img.width);
+        const width = Math.round(img.width * scale);
+        const height = Math.round(img.height * scale);
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+        const png = canvas.toDataURL("image/png");
+        return dataURLToUint8Array(png);
+      }
+
+      function createCtaOverlay(text, ratio) {
+        if (!text || !text.trim()) return null;
+        const clean = text.trim().slice(0, 80);
+        const canvas = document.createElement("canvas");
+        const isVertical = ratio === "9:16";
+        const isSquare = ratio === "1:1";
+        canvas.width = isVertical ? 640 : isSquare ? 680 : 880;
+        canvas.height = isVertical ? 180 : 160;
+        const ctx = canvas.getContext("2d");
+        ctx.fillStyle = "rgba(0,0,0,0.55)";
+        const radius = 18;
+        const w = canvas.width;
+        const h = canvas.height;
+        ctx.beginPath();
+        ctx.moveTo(radius, 0);
+        ctx.lineTo(w - radius, 0);
+        ctx.quadraticCurveTo(w, 0, w, radius);
+        ctx.lineTo(w, h - radius);
+        ctx.quadraticCurveTo(w, h, w - radius, h);
+        ctx.lineTo(radius, h);
+        ctx.quadraticCurveTo(0, h, 0, h - radius);
+        ctx.lineTo(0, radius);
+        ctx.quadraticCurveTo(0, 0, radius, 0);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = "#16a34a";
+        ctx.fillRect(18, h / 2 - 22, 44, 44);
+        ctx.fillStyle = "white";
+        ctx.beginPath();
+        ctx.moveTo(32, h / 2 - 6);
+        ctx.lineTo(48, h / 2);
+        ctx.lineTo(32, h / 2 + 6);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.font = "28px 'Inter', 'Segoe UI', system-ui";
+        ctx.fillStyle = "white";
+        ctx.textBaseline = "middle";
+        ctx.fillText(clean, 76, h / 2);
+
+        const png = canvas.toDataURL("image/png");
+        return dataURLToUint8Array(png);
       }
 
       async function ensureFFmpeg() {
@@ -388,18 +363,7 @@
             } else {
               resolve(dur);
             }
-          };
-          probeVideo.onerror = () => reject(new Error("Failed to load video metadata."));
-        });
-      }
-
-      fileInput.addEventListener("change", async (e) => {
-        setError("");
-        const file = e.target.files[0];
-        if (!file) {
-          sourceFile = null;
-          videoDuration = null;
-          metaEl.textContent = "";
+@@ -403,243 +559,353 @@
           setStatus("Idle – upload a video to begin");
           return;
         }
@@ -422,6 +386,17 @@
           console.error(err);
           setError(err.message || "Failed to read video.");
           setStatus("Error loading video.", "warn");
+        }
+      });
+
+      presetSelect.addEventListener("change", (e) => {
+        applyPreset(e.target.value);
+      });
+
+      logoInput.addEventListener("change", (e) => {
+        logoFile = e.target.files[0] || null;
+        if (logoFile) {
+          setStatus(`Logo loaded: ${logoFile.name}`, "info");
         }
       });
 
@@ -458,6 +433,26 @@
         return vals;
       }
 
+      function setRatios(ratios) {
+        ratioCheckboxes.forEach((cb) => {
+          cb.checked = ratios.includes(cb.value);
+        });
+      }
+
+      function applyPreset(preset) {
+        if (preset === "meta") {
+          clipLengthInput.value = 15;
+          setRatios(["9:16", "1:1"]);
+          setStatus("Applied Meta Ads pack (15s, 9:16 + 1:1).", "info");
+        } else if (preset === "youtube") {
+          clipLengthInput.value = 30;
+          setRatios(["16:9"]);
+          setStatus("Applied YouTube pack (30s, 16:9).", "info");
+        } else {
+          setStatus("Custom mode. Adjust clip length, count, and ratios.", "info");
+        }
+      }
+
       function getFilterForRatio(ratio) {
         // Scale to cover and crop to the target aspect for ad-friendly resolutions.
         switch (ratio) {
@@ -484,6 +479,8 @@
         if (Number.isNaN(clipLen)) clipLen = 30;
         let clipCount = parseInt(clipCountInput.value, 10);
         if (Number.isNaN(clipCount)) clipCount = 3;
+        const clipLen = enforceNumberInput(clipLengthInput, 15, 40, 30);
+        const clipCount = enforceNumberInput(clipCountInput, 1, 3, 3);
 
         const ratios = getSelectedRatios();
         if (ratios.length === 0) {
@@ -491,11 +488,26 @@
           return;
         }
 
+        const ctaTexts = {};
+        ctaInputs.forEach((input) => {
+          const idx = Number(input.dataset.index);
+          if (idx) ctaTexts[idx] = input.value.trim();
+        });
+
         const plan = computeClipPlan(videoDuration, clipLen, clipCount);
         if (!plan.clips.length) {
           setError("Unable to compute clip segments from this video.");
           return;
         }
+
+        const startSummary = plan.clips
+          .map((c) => `${c.index}: ${c.start.toFixed(1)}s`)
+          .join(", ");
+        metaEl.innerHTML = `
+          <strong>Plan:</strong> ${plan.clips.length} clip(s) · ${plan.clipLength.toFixed(1)}s each<br>
+          <strong>Starts:</strong> ${startSummary}<br>
+          <strong>Ratios:</strong> ${ratios.join(", ")}
+        `;
 
         // UI state
         generateBtn.disabled = true;
@@ -519,7 +531,16 @@
 
           ffmpeg.FS("writeFile", inputFileName, await fetchFile(sourceFile));
 
+          // Brand logo
+          let logoPath = null;
+          if (logoFile) {
+            const logoBytes = await imageFileToPNGBytes(logoFile, 280);
+            logoPath = "brand_logo.png";
+            ffmpeg.FS("writeFile", logoPath, logoBytes);
+          }
+
           const outputs = [];
+          const ctaCache = new Map();
 
           for (const clip of plan.clips) {
             for (const ratio of ratios) {
@@ -534,12 +555,51 @@
                 ratio === "16:9" ? "h" : ratio === "9:16" ? "v" : "sq";
               const outName = `clip_${clip.index}_${suffix}.mp4`;
 
+              const ctaKey = `${clip.index}_${ratio}`;
+              let ctaPath = null;
+              if (ctaTexts[clip.index]) {
+                if (!ctaCache.has(ctaKey)) {
+                  const overlayBytes = createCtaOverlay(ctaTexts[clip.index], ratio);
+                  if (overlayBytes) {
+                    const overlayName = `cta_${ctaKey.replace(":", "x")}.png`;
+                    ffmpeg.FS("writeFile", overlayName, overlayBytes);
+                    ctaCache.set(ctaKey, overlayName);
+                  }
+                }
+                ctaPath = ctaCache.get(ctaKey) || null;
+              }
+
               setStatus(
                 `Rendering clip ${clip.index} (${ratio})… (${startArg}s → +${durationArg}s)`,
                 "work"
               );
 
               // ffmpeg command: trim & resize
+              const inputArgs = ["-ss", startArg, "-t", durationArg, "-i", inputFileName];
+              const filterSteps = [`[0:v]${vf}[v0]`];
+              let currentLabel = "v0";
+              let nextInputIndex = 1;
+
+              if (logoPath) {
+                inputArgs.push("-i", logoPath);
+                filterSteps.push(
+                  `[${nextInputIndex}:v]scale=240:-1[logo];[${currentLabel}][logo]overlay=16:16[v1]`
+                );
+                currentLabel = "v1";
+                nextInputIndex += 1;
+              }
+
+              if (ctaPath) {
+                inputArgs.push("-i", ctaPath);
+                filterSteps.push(
+                  `[${nextInputIndex}:v]scale=iw:ih[cta];[${currentLabel}][cta]overlay=x=W-w-24:y=H-h-24[vout]`
+                );
+                currentLabel = "vout";
+                nextInputIndex += 1;
+              }
+
+              const filterComplex = filterSteps.join(";");
+
               await ffmpeg.run(
                 "-ss",
                 startArg,
@@ -549,6 +609,13 @@
                 inputFileName,
                 "-vf",
                 vf,
+                ...inputArgs,
+                "-filter_complex",
+                filterComplex,
+                "-map",
+                `[${currentLabel}]`,
+                "-map",
+                "0:a?",
                 "-r",
                 "30",
                 "-c:v",
@@ -575,6 +642,8 @@
                 ratio,
                 start: safeStart,
                 length: plan.clipLength,
+                hasLogo: Boolean(logoPath),
+                cta: ctaTexts[clip.index],
               });
 
               // Clean FS entry to save memory
@@ -588,6 +657,20 @@
           } catch (e) {
             /* ignore */
           }
+          if (logoPath) {
+            try {
+              ffmpeg.FS("unlink", logoPath);
+            } catch (e) {
+              /* ignore */
+            }
+          }
+          ctaCache.forEach((path) => {
+            try {
+              ffmpeg.FS("unlink", path);
+            } catch (e) {
+              /* ignore */
+            }
+          });
 
           // Render outputs to UI
           outputGrid.innerHTML = "";
@@ -617,6 +700,10 @@
                 >
                   Download
                 </a>
+              </div>
+              <div class="inline-note" style="width:100%; box-sizing:border-box;">
+                ${out.hasLogo ? "Logo overlay" : "No logo"} ·
+                ${out.cta ? `CTA: ${out.cta}` : "No CTA"}
               </div>
             `;
             outputGrid.appendChild(item);
