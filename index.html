@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Ad Clip Generator – Multi-Size Video Exporter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- FFmpeg.wasm (browser bundle) -->
+  <!-- For production, self-host @ffmpeg/ffmpeg and its core files. -->
+  <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.10.0/dist/ffmpeg.min.js"></script>
+  <style>
+    :root {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #111827;
+      background: #f3f4f6;
+    }
+    body {
+      margin: 0;
+      padding: 24px;
+      display: flex;
+      justify-content: center;
+    }
+    .app {
+      max-width: 960px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      padding: 24px 24px 32px;
+      box-sizing: border-box;
+    }
+    h1 {
+      margin: 0 0 4px;
+      font-size: 24px;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      margin-bottom: 20px;
+      color: #6b7280;
+      font-size: 14px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(0, 1.2fr);
+      gap: 20px;
+    }
+    @media (max-width: 800px) {
+      .grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+    }
+    .card {
+      border-radius: 12px;
+      border: 1px solid #e5e7eb;
+      padding: 16px 18px 18px;
+      background: #f9fafb;
+    }
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 16px;
+    }
+    .field {
+      margin-bottom: 12px;
+      font-size: 14px;
+    }
+    .field label {
+      display: block;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+    .field small {
+      display: block;
+      color: #6b7280;
+      font-size: 12px;
+    }
+    input[type="number"],
+    input[type="file"],
+    select {
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 14px;
+      padding: 8px 9px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      background: #ffffff;
+      outline: none;
+    }
+    input[type="number"]:focus,
+    input[type="file"]:focus,
+    select:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 1px rgba(37, 99, 235, 0.3);
+    }
+    .checkbox-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px 16px;
+      margin-top: 6px;
+    }
+    .checkbox-row label {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    button {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      background: linear-gradient(135deg, #2563eb, #4f46e5);
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 25px rgba(37, 99, 235, 0.4);
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .status {
+      margin-top: 10px;
+      font-size: 13px;
+      color: #4b5563;
+    }
+    .status strong {
+      color: #111827;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      background: #eff6ff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      color: #1d4ed8;
+      margin-top: 4px;
+    }
+    .badge span {
+      height: 6px;
+      width: 6px;
+      border-radius: 999px;
+      background: #22c55e;
+    }
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 11px;
+    }
+    .chip {
+      border-radius: 999px;
+      padding: 3px 9px;
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .output-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .output-item {
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #e5e7eb;
+      padding: 8px 8px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+    }
+    .output-item video {
+      width: 100%;
+      border-radius: 8px;
+      background: #111827;
+    }
+    .output-item strong {
+      font-size: 12px;
+    }
+    .pill {
+      font-size: 11px;
+      border-radius: 999px;
+      padding: 2px 7px;
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .hint {
+      font-size: 11px;
+      color: #6b7280;
+      margin-top: 6px;
+    }
+    .error {
+      color: #b91c1c;
+      font-size: 12px;
+      margin-top: 6px;
+    }
+    .divider {
+      height: 1px;
+      background: #e5e7eb;
+      margin: 18px 0 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Ad Clip Generator</h1>
+    <div class="subtitle">
+      Upload one long video and export up to <strong>3 clips</strong> (15–40s) in
+      <strong>16:9</strong>, <strong>9:16</strong>, and <strong>1:1</strong> formats, ready for ads.
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: INPUTS -->
+      <div class="card">
+        <h2>1. Source video</h2>
+        <div class="field">
+          <label for="videoFile">Upload main video</label>
+          <input type="file" id="videoFile" accept="video/*" />
+          <small>Use a single high-quality MP4 / MOV or similar.</small>
+        </div>
+
+        <div class="field">
+          <label>Clip length (seconds)</label>
+          <div style="display:flex; gap:8px;">
+            <input
+              type="number"
+              id="clipLength"
+              min="15"
+              max="40"
+              value="30"
+            />
+            <div style="font-size:12px; color:#6b7280; display:flex; align-items:center;">
+              Min 15 · Max 40
+            </div>
+          </div>
+          <small>All generated clips will use this duration.</small>
+        </div>
+
+        <div class="field">
+          <label>Number of base clips</label>
+          <input
+            type="number"
+            id="clipCount"
+            min="1"
+            max="3"
+            value="3"
+          />
+          <small>
+            Up to 3 base clips will be cut from different sections of the video.
+          </small>
+        </div>
+
+        <div class="field">
+          <label>Aspect ratios to export</label>
+          <div class="checkbox-row">
+            <label>
+              <input type="checkbox" class="ratio-option" value="16:9" checked />
+              <span>16:9 Horizontal</span>
+            </label>
+            <label>
+              <input type="checkbox" class="ratio-option" value="9:16" checked />
+              <span>9:16 Vertical (Shorts / Reels)</span>
+            </label>
+            <label>
+              <input type="checkbox" class="ratio-option" value="1:1" />
+              <span>1:1 Square</span>
+            </label>
+          </div>
+          <small>
+            You’ll get separate files per base clip + selected ratio.
+          </small>
+        </div>
+
+        <div class="divider"></div>
+
+        <h2>2. Generate</h2>
+        <button id="generateBtn">
+          <span id="btnLabel">Generate Ad Clips</span>
+        </button>
+
+        <div class="status" id="status">
+          <div class="badge">
+            <span></span>
+            <span>Idle – upload a video to begin</span>
+          </div>
+        </div>
+        <div class="error" id="error"></div>
+      </div>
+
+      <!-- RIGHT: OUTPUTS -->
+      <div class="card">
+        <div class="output-header">
+          <h2>3. Output clips</h2>
+          <div class="chips">
+            <div class="chip">Min length: 15s</div>
+            <div class="chip">Max length: 40s</div>
+            <div class="chip">Max base clips: 3</div>
+          </div>
+        </div>
+        <div id="meta" class="hint"></div>
+        <div class="output-grid" id="outputGrid"></div>
+        <p class="hint">
+          Each clip is re-encoded as H.264 MP4 with the selected aspect ratio, ready
+          for platforms like YouTube, TikTok, Meta, and display ads.
+        </p>
+      </div>
+    </div>
+
+    <!-- Hidden video just to read duration -->
+    <video id="probeVideo" style="display:none;"></video>
+
+    <script>
+      // UI refs
+      const fileInput = document.getElementById("videoFile");
+      const clipLengthInput = document.getElementById("clipLength");
+      const clipCountInput = document.getElementById("clipCount");
+      const ratioCheckboxes = document.querySelectorAll(".ratio-option");
+      const generateBtn = document.getElementById("generateBtn");
+      const btnLabel = document.getElementById("btnLabel");
+      const statusEl = document.getElementById("status");
+      const errorEl = document.getElementById("error");
+      const outputGrid = document.getElementById("outputGrid");
+      const metaEl = document.getElementById("meta");
+      const probeVideo = document.getElementById("probeVideo");
+
+      let ffmpeg = null;
+      let sourceFile = null;
+      let sourceUrl = null;
+      let videoDuration = null;
+
+      function setStatus(text, mode = "info") {
+        const colors = {
+          info: "#6b7280",
+          work: "#1d4ed8",
+          ok: "#16a34a",
+          warn: "#b45309",
+        };
+        statusEl.innerHTML = `
+          <div class="badge" style="background:${mode === "work" ? "#eef2ff" : "#eff6ff"}; color:${colors[mode]};">
+            <span style="background:${colors[mode]};"></span>
+            <span>${text}</span>
+          </div>
+        `;
+      }
+
+      function setError(msg) {
+        errorEl.textContent = msg || "";
+      }
+
+      function clamp(num, min, max) {
+        return Math.min(Math.max(num, min), max);
+      }
+
+      async function ensureFFmpeg() {
+        if (ffmpeg && ffmpeg.isLoaded && ffmpeg.isLoaded()) return;
+        if (!window.FFmpeg) {
+          throw new Error("FFmpeg.wasm script not loaded.");
+        }
+        const { createFFmpeg, fetchFile } = FFmpeg;
+        window._ffmpegFetchFile = fetchFile;
+        ffmpeg = createFFmpeg({ log: true });
+        setStatus("Loading FFmpeg engine in the background…", "work");
+        await ffmpeg.load();
+        setStatus("FFmpeg ready. Configure your clips and click Generate.", "ok");
+      }
+
+      // Read duration from the uploaded file using a hidden video element
+      function probeDuration(file) {
+        return new Promise((resolve, reject) => {
+          const url = URL.createObjectURL(file);
+          probeVideo.src = url;
+          probeVideo.onloadedmetadata = () => {
+            const dur = probeVideo.duration;
+            if (!isFinite(dur) || dur <= 0) {
+              reject(new Error("Could not read video duration."));
+            } else {
+              resolve(dur);
+            }
+          };
+          probeVideo.onerror = () => reject(new Error("Failed to load video metadata."));
+        });
+      }
+
+      fileInput.addEventListener("change", async (e) => {
+        setError("");
+        const file = e.target.files[0];
+        if (!file) {
+          sourceFile = null;
+          videoDuration = null;
+          metaEl.textContent = "";
+          setStatus("Idle – upload a video to begin");
+          return;
+        }
+
+        try {
+          setStatus("Reading video metadata…", "work");
+          const duration = await probeDuration(file);
+          sourceFile = file;
+          videoDuration = duration;
+
+          if (sourceUrl) URL.revokeObjectURL(sourceUrl);
+          sourceUrl = URL.createObjectURL(file);
+
+          metaEl.innerHTML = `
+            <strong>Source:</strong> ${file.name} · ${(file.size / (1024 * 1024)).toFixed(1)} MB<br>
+            <strong>Duration:</strong> ${duration.toFixed(1)} seconds
+          `;
+          setStatus("Video loaded. You can configure clip length and count.", "ok");
+        } catch (err) {
+          console.error(err);
+          setError(err.message || "Failed to read video.");
+          setStatus("Error loading video.", "warn");
+        }
+      });
+
+      // Compute start times for each base clip, spaced across the duration
+      function computeClipPlan(totalDuration, clipLength, requestedClips) {
+        const safeLen = clamp(clipLength, 15, 40);
+        const maxClipsByTime = Math.max(1, Math.floor(totalDuration / safeLen));
+        const clipCount = clamp(requestedClips, 1, Math.min(3, maxClipsByTime));
+
+        const available = totalDuration - safeLen;
+        let starts = [];
+        if (available <= 0) {
+          starts = [0];
+        } else if (clipCount === 1) {
+          starts = [available / 2];
+        } else {
+          const spacing = available / (clipCount - 1);
+          for (let i = 0; i < clipCount; i++) {
+            starts.push(spacing * i);
+          }
+        }
+
+        return {
+          clipLength: safeLen,
+          clips: starts.map((s, idx) => ({ index: idx + 1, start: s })),
+        };
+      }
+
+      function getSelectedRatios() {
+        const vals = [];
+        ratioCheckboxes.forEach((cb) => {
+          if (cb.checked) vals.push(cb.value);
+        });
+        return vals;
+      }
+
+      function getFilterForRatio(ratio) {
+        // Scale to cover and crop to the target aspect for ad-friendly resolutions.
+        switch (ratio) {
+          case "16:9":
+            return "scale=1920:1080:force_original_aspect_ratio=cover,crop=1920:1080";
+          case "9:16":
+            return "scale=1080:1920:force_original_aspect_ratio=cover,crop=1080:1920";
+          case "1:1":
+            return "scale=1080:1080:force_original_aspect_ratio=cover,crop=1080:1080";
+          default:
+            return null;
+        }
+      }
+
+      async function generateClips() {
+        setError("");
+
+        if (!sourceFile || !videoDuration) {
+          setError("Please upload a source video first.");
+          return;
+        }
+
+        let clipLen = parseFloat(clipLengthInput.value);
+        if (Number.isNaN(clipLen)) clipLen = 30;
+        let clipCount = parseInt(clipCountInput.value, 10);
+        if (Number.isNaN(clipCount)) clipCount = 3;
+
+        const ratios = getSelectedRatios();
+        if (ratios.length === 0) {
+          setError("Select at least one aspect ratio.");
+          return;
+        }
+
+        const plan = computeClipPlan(videoDuration, clipLen, clipCount);
+        if (!plan.clips.length) {
+          setError("Unable to compute clip segments from this video.");
+          return;
+        }
+
+        // UI state
+        generateBtn.disabled = true;
+        btnLabel.textContent = "Processing…";
+        setStatus(
+          `Preparing ${plan.clips.length} base clip(s) of ${plan.clipLength.toFixed(
+            1
+          )}s each in ${ratios.join(", ")}…`,
+          "work"
+        );
+        outputGrid.innerHTML = "";
+
+        try {
+          await ensureFFmpeg();
+
+          // Write input file once
+          const fetchFile = window._ffmpegFetchFile;
+          const inputName = "input_video";
+          const ext = (sourceFile.name.split(".").pop() || "mp4").toLowerCase();
+          const inputFileName = `${inputName}.${ext}`;
+
+          ffmpeg.FS("writeFile", inputFileName, await fetchFile(sourceFile));
+
+          const outputs = [];
+
+          for (const clip of plan.clips) {
+            for (const ratio of ratios) {
+              const vf = getFilterForRatio(ratio);
+              if (!vf) continue;
+
+              const safeStart = Math.max(0, clip.start);
+              const durationArg = plan.clipLength.toFixed(2);
+              const startArg = safeStart.toFixed(2);
+
+              const suffix =
+                ratio === "16:9" ? "h" : ratio === "9:16" ? "v" : "sq";
+              const outName = `clip_${clip.index}_${suffix}.mp4`;
+
+              setStatus(
+                `Rendering clip ${clip.index} (${ratio})… (${startArg}s → +${durationArg}s)`,
+                "work"
+              );
+
+              // ffmpeg command: trim & resize
+              await ffmpeg.run(
+                "-ss",
+                startArg,
+                "-t",
+                durationArg,
+                "-i",
+                inputFileName,
+                "-vf",
+                vf,
+                "-r",
+                "30",
+                "-c:v",
+                "libx264",
+                "-preset",
+                "veryfast",
+                "-crf",
+                "23",
+                "-c:a",
+                "aac",
+                "-b:a",
+                "128k",
+                outName
+              );
+
+              const data = ffmpeg.FS("readFile", outName);
+              const blob = new Blob([data.buffer], { type: "video/mp4" });
+              const url = URL.createObjectURL(blob);
+
+              outputs.push({
+                url,
+                fileName: outName,
+                clipIndex: clip.index,
+                ratio,
+                start: safeStart,
+                length: plan.clipLength,
+              });
+
+              // Clean FS entry to save memory
+              ffmpeg.FS("unlink", outName);
+            }
+          }
+
+          // Optional: clean input from FS
+          try {
+            ffmpeg.FS("unlink", inputFileName);
+          } catch (e) {
+            /* ignore */
+          }
+
+          // Render outputs to UI
+          outputGrid.innerHTML = "";
+          outputs.forEach((out) => {
+            const item = document.createElement("div");
+            item.className = "output-item";
+            item.innerHTML = `
+              <video controls src="${out.url}"></video>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                  <strong>Clip ${out.clipIndex}</strong>
+                  <span class="pill">${out.ratio}</span>
+                </div>
+                <div style="font-size:11px; color:#6b7280;">
+                  ${out.length.toFixed(1)}s<br>
+                  from ${out.start.toFixed(1)}s
+                </div>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; gap:6px;">
+                <span style="font-size:11px; color:#4b5563; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">
+                  ${out.fileName}
+                </span>
+                <a
+                  href="${out.url}"
+                  download="${out.fileName}"
+                  style="font-size:11px; text-decoration:none; padding:4px 8px; border-radius:999px; background:#111827; color:white;"
+                >
+                  Download
+                </a>
+              </div>
+            `;
+            outputGrid.appendChild(item);
+          });
+
+          setStatus(
+            `Done. Generated ${outputs.length} ad-ready file(s) from ${plan.clips.length} base clip(s).`,
+            "ok"
+          );
+        } catch (err) {
+          console.error(err);
+          setError(err.message || "Unexpected error while processing video.");
+          setStatus("Processing failed.", "warn");
+        } finally {
+          generateBtn.disabled = false;
+          btnLabel.textContent = "Generate Ad Clips";
+        }
+      }
+
+      generateBtn.addEventListener("click", () => {
+        generateClips();
+      });
+    </script>
+  </div>
+</body>
+</html>
